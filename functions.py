@@ -8,7 +8,8 @@ def get_response(route):
 
 
 def get_all_id():
-    return get_response('id')
+    data = list(map(int, get_response('id')[1:-1].split(', ')))
+    return data
 
 
 def get_all_data(as_df=False):
@@ -18,14 +19,14 @@ def get_all_data(as_df=False):
     return data
 
 
-def get_client_data(id, as_df=False):
+def get_data_from_id(id, as_df=False):
     data = get_response(f'data/{id}')
     if as_df:
         return pd.read_json(data, typ='series')
     return data
 
 
-def get_client_metadata(id, as_df=False):
+def get_metadata_from_id(id, as_df=False):
     data = get_response(f'metadata/{id}')
     if as_df:
         return pd.read_json(data)
@@ -33,4 +34,4 @@ def get_client_metadata(id, as_df=False):
 
 
 if __name__ == '__main__':
-    print(get_client_metadata(141410, as_df=True))
+    print(get_all_id())
