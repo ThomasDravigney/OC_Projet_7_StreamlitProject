@@ -1,5 +1,6 @@
 import streamlit as st
 import math
+import altair as alt
 import plotly.graph_objects as go
 from functions import get_all_id, get_all_data, get_data_from_id, get_metadata_from_id
 
@@ -9,6 +10,8 @@ st.title('Outil de scoring crédit')
 id_list = get_all_id()
 id = st.selectbox('ID du crédit :', id_list)
 data = get_data_from_id(id, as_df=True)
+metadata = get_metadata_from_id(id, as_df=True)
+metadata['feature_importance'] = -metadata['feature_importance']  # score reversal for class 0
 target_proba = data.loc['TARGET_PROBA']
 
 
@@ -42,18 +45,30 @@ with col_loan_info:
 
 
 st.write("""
-## Résultat : Crédit {}.
+## Résultat : Crédit {}
 """.format('accordé' if target_proba > 0.5 else 'refusé'))
 
+# Target proba chart
 color_code = 'red'
 if target_proba > 0.5: color_code = 'yellow'
 if target_proba > 0.7: color_code = 'green'
-
-fig = go.Figure(go.Indicator(
+chart_proba = go.Figure(go.Indicator(
     mode='gauge+number',
     value=target_proba,
     domain={'x': [0, 1], 'y': [0, 1]},
     title={'text': 'Probabilité de remboursement'},
     gauge={'axis': {'range': [0, 1]}, 'bar': {'color': color_code}}))
+st.plotly_chart(chart_proba, use_container_width=True)
 
-st.plotly_chart(fig, use_container_width=True)
+
+st.write("""
+## Principaux critères de notation
+""")
+
+# Feature importance chart
+chart_feature_importance = alt.Chart(metadata.head(10)).mark_bar(color=color_code).encode(
+    x='feature_importance:Q',
+    y=alt.Y('feature_name:O', sort={'field': 'x'}),
+    tooltip=['feature_description']
+).properties(height=500)
+st.altair_chart(chart_feature_importance, use_container_width=True)

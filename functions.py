@@ -15,21 +15,21 @@ def get_all_id():
 def get_all_data(as_df=False):
     data = get_response('data')
     if as_df:
-        return pd.read_json(data)
+        data = pd.read_json(data)
     return data
 
 
 def get_data_from_id(id, as_df=False):
     data = get_response(f'data/{id}')
     if as_df:
-        return pd.read_json(data, typ='series')
+        data = pd.read_json(data, typ='series')
     return data
 
 
 def get_metadata_from_id(id, as_df=False):
     data = get_response(f'metadata/{id}')
     if as_df:
-        return pd.read_json(data)
+        data = pd.read_json(data)
     return data
 
 
