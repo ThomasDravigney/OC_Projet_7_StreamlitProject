@@ -1,20 +1,33 @@
 import streamlit as st
 import math
-import altair as alt
 import plotly.graph_objects as go
-from functions import get_all_id, get_all_data, get_data_from_id, get_metadata_from_id
+import altair as alt
+from api import get_all_id, get_all_data, get_data_from_id, get_metadata_from_id
+from functions import match_proba_result
 
+primary_color = '#8375A9'
+
+results = {
+    0: {'label': 'défavorable (P < 0.5)', 'color': 'red', 'range': (0, 0.5), 'label_caps': 'DÉFAVORABLE'},
+    1: {'label': 'favorable (P > 0.5)', 'color': 'yellow', 'range': (0.5, 0.7), 'label_caps': 'FAVORABLE'},
+    2: {'label': 'très favorable (P > 0.7)', 'color': 'green', 'range': (0.7, 1), 'label_caps': 'TRÈS FAVORABLE'},
+}
 
 st.title('Outil de scoring crédit')
 
-id_list = get_all_id()
-id = st.selectbox('ID du crédit :', id_list)
+all_id = get_all_id()
+all_data = get_all_data(as_df=True)
+all_data['RESULT_ID'] = all_data['TARGET_PROBA'].apply(match_proba_result, results=results)
+results_series = all_data['RESULT_ID'].apply(lambda x: results[x]['label_caps'])
+id = st.selectbox('ID du crédit :', all_id)
 data = get_data_from_id(id, as_df=True)
 metadata = get_metadata_from_id(id, as_df=True)
 metadata['feature_importance'] = -metadata['feature_importance']  # score reversal for class 0
 target_proba = data.loc['TARGET_PROBA']
+result = results[match_proba_result(target_proba, results)]
 
 
+# general info
 st.write("""
 ## Informations générales
 """)
@@ -44,31 +57,62 @@ with col_loan_info:
     st.table(loan_info.astype('str'))
 
 
-st.write("""
-## Résultat : Crédit {}
-""".format('accordé' if target_proba > 0.5 else 'refusé'))
-
 # Target proba chart
-color_code = 'red'
-if target_proba > 0.5: color_code = 'yellow'
-if target_proba > 0.7: color_code = 'green'
+st.write(f"""
+## Résultat : {result['label']}
+""")
+
 chart_proba = go.Figure(go.Indicator(
     mode='gauge+number',
     value=target_proba,
     domain={'x': [0, 1], 'y': [0, 1]},
-    title={'text': 'Probabilité de remboursement'},
-    gauge={'axis': {'range': [0, 1]}, 'bar': {'color': color_code}}))
+    title={'text': 'Probabilité de remboursement :'},
+    gauge={'axis': {'range': [0, 1]}, 'bar': {'color': result['color']}}))
 st.plotly_chart(chart_proba, use_container_width=True)
 
 
+# Feature importance chart
 st.write("""
 ## Principaux critères de notation
 """)
 
-# Feature importance chart
-chart_feature_importance = alt.Chart(metadata.head(10)).mark_bar(color=color_code).encode(
+chart_feature_importance = alt.Chart(metadata.head(10)).mark_bar(color=result['color']).encode(
     x='feature_importance:Q',
     y=alt.Y('feature_name:O', sort={'field': 'x'}),
     tooltip=['feature_description']
 ).properties(height=500)
 st.altair_chart(chart_feature_importance, use_container_width=True)
+
+
+# Exploration chart
+st.write("""
+## Exploration de variables
+""")
+
+idx_0 = all_data[all_data['RESULT_ID'] == 0].index
+idx_1 = all_data[all_data['RESULT_ID'] == 1].index
+idx_2 = all_data[all_data['RESULT_ID'] == 2].index
+filtered_data = all_data.drop(['TARGET', 'TARGET_PROBA', 'RESULT_ID'], axis=1).reindex(metadata['feature_name'], axis=1)
+filtered_data['RESULT_TEXT'] = results_series
+
+filter_column = st.selectbox(
+    label='Choisir une variable :',
+    options=filtered_data.columns
+)
+
+st.write(f"""
+Crédit sélectionné | **{filter_column}** = **{round(data.loc[filter_column], 2)}**
+""")
+
+chart_exploration = go.Figure()
+chart_exploration.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="right", x=1))
+chart_exploration.add_trace(go.Violin(x=filtered_data.loc[idx_0]['RESULT_TEXT'], y=filtered_data.loc[idx_0][filter_column],
+                                      name=results[0]['label_caps'], fillcolor=results[0]['color'], box_visible=True,
+                                      line_color='black', meanline_visible=True, opacity=0.5, x0=filter_column))
+chart_exploration.add_trace(go.Violin(x=filtered_data.loc[idx_1]['RESULT_TEXT'], y=filtered_data.loc[idx_1][filter_column],
+                                      name=results[1]['label_caps'], fillcolor=results[1]['color'], box_visible=True,
+                                      line_color='black', meanline_visible=True, opacity=0.5, x0=filter_column))
+chart_exploration.add_trace(go.Violin(x=filtered_data.loc[idx_2]['RESULT_TEXT'], y=filtered_data.loc[idx_2][filter_column],
+                                      name=results[2]['label_caps'], fillcolor=results[2]['color'], box_visible=True,
+                                      line_color='black', meanline_visible=True, opacity=0.5, x0=filter_column))
+st.plotly_chart(chart_exploration, use_container_width=True)

@@ -1,3 +1,4 @@
+import streamlit as st
 import requests
 import pandas as pd
 
@@ -12,6 +13,7 @@ def get_all_id():
     return data
 
 
+@st.cache(persist=True, allow_output_mutation=True)
 def get_all_data(as_df=False):
     data = get_response('data')
     if as_df:
