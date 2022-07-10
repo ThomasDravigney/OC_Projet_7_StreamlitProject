@@ -8,6 +8,7 @@ def get_response(route):
     return response.json()
 
 
+@st.cache(persist=True, allow_output_mutation=True)
 def get_all_id():
     data = list(map(int, get_response('id')[1:-1].split(', ')))
     return data
@@ -21,6 +22,7 @@ def get_all_data(as_df=False):
     return data
 
 
+@st.cache(persist=True, allow_output_mutation=True)
 def get_data_from_id(id, as_df=False):
     data = get_response(f'data/{id}')
     if as_df:
@@ -28,6 +30,7 @@ def get_data_from_id(id, as_df=False):
     return data
 
 
+@st.cache(persist=True, allow_output_mutation=True)
 def get_metadata_from_id(id, as_df=False):
     data = get_response(f'metadata/{id}')
     if as_df:

@@ -1,17 +1,13 @@
 import streamlit as st
-import plotly.graph_objects as go
 from api import get_all_id, get_all_data, get_data_from_id, get_metadata_from_id
-from functions import match_proba_result, get_client_info_table, get_loan_info_table, get_proba_chart,\
+from functions import results, match_proba_result, get_client_info_table, get_loan_info_table, get_proba_chart,\
     get_feature_importance_chart, get_feature_exploration_chart
 
 
-results = {
-    0: {'label': 'défavorable (P < 0.5)', 'color': 'red', 'range': (0, 0.5), 'label_caps': 'DÉFAVORABLE'},
-    1: {'label': 'favorable (P > 0.5)', 'color': 'yellow', 'range': (0.5, 0.7), 'label_caps': 'FAVORABLE'},
-    2: {'label': 'très favorable (P > 0.7)', 'color': 'green', 'range': (0.7, 1), 'label_caps': 'TRÈS FAVORABLE'},
-}
+st.set_page_config(page_title='Dashboard - Scoring crédit')
 
 st.title('Outil de scoring crédit')
+
 
 # LOAD GLOBAL DATA
 all_id = get_all_id()

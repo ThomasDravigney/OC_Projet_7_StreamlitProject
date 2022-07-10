@@ -4,6 +4,13 @@ import plotly.graph_objects as go
 import altair as alt
 
 
+results = {
+    0: {'label': 'défavorable (P < 0.5)', 'color': 'red', 'range': (0, 0.5), 'label_caps': 'DÉFAVORABLE'},
+    1: {'label': 'favorable (P > 0.5)', 'color': 'yellow', 'range': (0.5, 0.7), 'label_caps': 'FAVORABLE'},
+    2: {'label': 'très favorable (P > 0.7)', 'color': 'green', 'range': (0.7, 1), 'label_caps': 'TRÈS FAVORABLE'},
+}
+
+
 def match_proba_result(x, results):
     for key, value in results.items():
         if value['range'][0] < x < value['range'][1]:
