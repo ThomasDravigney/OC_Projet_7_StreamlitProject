@@ -46,7 +46,7 @@ def get_proba_chart(target_proba, result):
         mode='gauge+number',
         value=target_proba,
         domain={'x': [0, 1], 'y': [0, 1]},
-        title={'text': 'Probabilité de remboursement :'},
+        title={'text': 'Probabilité de gain :'},
         gauge={'axis': {'range': [0, 1]}, 'bar': {'color': result['color']}}
     ))
     return chart_proba
