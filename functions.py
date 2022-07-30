@@ -53,7 +53,7 @@ def get_proba_chart(target_proba, result):
 
 
 def get_feature_importance_chart(metadata, result, size=10):
-    metadata['feature_importance'] = -metadata['feature_importance']  # score reversal for class 0
+    metadata['feature_importance'] = metadata['feature_importance']  # score reversal for class 0
     chart_feature_importance = alt.Chart(metadata.head(size)).mark_bar(color=result['color']).encode(
         x='feature_importance:Q',
         y=alt.Y('feature_name:O', sort={'field': 'x'}),
